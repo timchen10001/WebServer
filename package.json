@@ -1,0 +1,39 @@
+{
+  "devDependencies": {
+    "@types/connect-redis": "^0.0.16",
+    "@types/express-session": "^1.17.3",
+    "@types/node": "^14.14.25",
+    "@types/nodemailer": "^6.4.0",
+    "@types/uuid": "^8.3.0",
+    "typescript": "^4.1.3"
+  },
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "apollo-server-express": "^2.19.2",
+    "argon2": "^0.27.1",
+    "connect-redis": "^5.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "graphql": "^15.5.0",
+    "ioredis": "^4.20.0",
+    "nodemailer": "^6.4.18",
+    "nodemon": "^2.0.7",
+    "pg": "^8.5.1",
+    "reflect-metadata": "^0.1.13",
+    "type-graphql": "^1.1.1",
+    "typeorm": "^0.2.30",
+    "uuid": "^8.3.2"
+  },
+  "scripts": {
+    "watch": "tsc -w",
+    "start": "node dist/index.js",
+    "dev": "nodemon dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

@@ -1,0 +1,7 @@
+dist
+
+node_modules
+
+src/configs/dev.ts
+
+constants.ts
