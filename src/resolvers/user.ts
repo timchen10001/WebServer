@@ -97,12 +97,12 @@ export class UserResolver {
     const token = uuidv4();
 
     // 設定 Redis Store
-    // 重設密碼憑證 30 分鐘後過期
+    // 重設密碼憑證
     redis.set(
       FORGET_PASSWORD_PREFIX + token,
-      user.id,
+      user.id, // key
       "ex",
-      30 * 60 * 1000
+      30 * 60 * 1000  // 30 分鐘後過期
     );
 
     await sendEmail(
