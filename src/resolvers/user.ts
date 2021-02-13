@@ -55,9 +55,8 @@ export class UserResolver {
         message: '憑證已經過期'
       }]
     }
-    const userIdInt = parseInt(userId);
 
-    const user = await User.findOne({ where: { id: userIdInt } });
+    const user = await User.findOne({ where: { id: parseInt(userId) } });
     
     if (!user) {
       return {
