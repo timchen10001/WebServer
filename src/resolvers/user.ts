@@ -240,16 +240,4 @@ export class UserResolver {
     );
   }
 
-  // @Mutation(() => UserResponse)
-  // async forgetPassword(
-  //   @Arg('token') token:string,
-  //   @Arg('email') email: string,
-  //   @Ctx() { req, res, redis }: MyContext
-  // ): Promise<UserResponse> {
-
-  //   const errors = inValidEmail(email);
-  //   if {}
-  //   await sleep(3000);
-
-  // };
 }
