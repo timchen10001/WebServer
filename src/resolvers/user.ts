@@ -33,7 +33,6 @@ export class UserResolver {
     @Arg("newPassword") newPassword: string,
     @Ctx() { req, redis }: MyContext
   ): Promise<UserResponse> {
-
     if (newPassword.length < 6) {
       return {
         errors: [
@@ -48,30 +47,39 @@ export class UserResolver {
     await sleep(2000);
 
     const key = FORGET_PASSWORD_PREFIX + token;
-    const userId = await redis.get(key);
-    if (!userId) return {
-      errors: [{
-        field: "token",
-        message: '憑證已經過期'
-      }]
-    }
+    const userIdStr = await redis.get(key);
 
-    const user = await User.findOne({ where: { id: parseInt(userId) } });
-    
+    if (!userIdStr)
+      return {
+        errors: [
+          {
+            field: "token",
+            message: "憑證已經過期",
+          },
+        ],
+      };
+
+    const userId = parseInt(userIdStr);
+    const user = await User.findOne({ where: { id: userId } });
+
     if (!user) {
       return {
-        errors: [{
-          field: "token",
-          message: "使用者已不存在"
-        }]
-      }
+        errors: [
+          {
+            field: "token",
+            message: "使用者已不存在",
+          },
+        ],
+      };
     }
-    
+
     // 改變密碼
     const hashedPassword = await argon2.hash(newPassword);
-    user.password = hashedPassword;
-    user.updatedAt = new Date();
-    await user.save();
+
+    // user.password = hashedPassword;
+    // user.updatedAt = new Date();
+    // await user.save();
+    await User.update({ id: userId }, { password: hashedPassword });
 
     // 改變密碼後，自動登入(如果不想要自動登入，註解掉即可)
     req.session.userId = user.id;
@@ -102,7 +110,7 @@ export class UserResolver {
       FORGET_PASSWORD_PREFIX + token,
       user.id, // key
       "ex",
-      30 * 60 * 1000  // 30 分鐘後過期
+      30 * 60 * 1000 // 30 分鐘後過期
     );
 
     await sendEmail(
@@ -239,5 +247,4 @@ export class UserResolver {
       })
     );
   }
-
 }
