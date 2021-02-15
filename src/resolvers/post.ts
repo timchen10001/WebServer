@@ -63,7 +63,7 @@ export class PostResolver {
     @Arg("id") id: number,
     @Ctx() { req }: MyContext
   ): Promise<boolean> {
-    const post = await Post.find({
+    const post = await Post.findOne({
       where: { id, creatorId: req.session.userId },
     });
     if (!post) {
