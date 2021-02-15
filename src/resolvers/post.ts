@@ -2,6 +2,7 @@ import { Post } from "../entities/Post";
 import {
   Arg,
   Ctx,
+  Int,
   Mutation,
   Query,
   Resolver,
@@ -10,14 +11,32 @@ import {
 import { InputPost } from "./graphql.types";
 import { MyContext } from "../types";
 import { isAuth } from "../middlewares/isAuth";
+import { getConnection } from "typeorm";
 
 @Resolver()
 export class PostResolver {
   // find all posts
   @UseMiddleware(isAuth)
-  @Query(() => [Post], { nullable: true })
-  async posts(@Ctx() { req }: MyContext): Promise<Post[] | null> {
-    return await Post.find({ where: { creatorId: req.session.userId } });
+  @Query(() => [Post])
+  async posts(
+    @Arg("limit", () => Int) limit: number,
+    @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    @Ctx() { req }: MyContext
+  ): Promise<Post[]> {
+    const realNumber = Math.min(50, limit);
+    const qb = getConnection()
+      .getRepository(Post)
+      .createQueryBuilder("p")
+      .orderBy('"createdAt"', "DESC")
+      .take(realNumber);
+
+    if (cursor) {
+      qb.where('"createdAt" < :cursor', {
+        cursor: new Date(parseInt(cursor)),
+        id: req.session.userId,
+      });
+    }
+    return qb.getMany();
   }
 
   // create a post based on the session-userId
