@@ -2,10 +2,12 @@ import { Post } from "../entities/Post";
 import {
   Arg,
   Ctx,
+  FieldResolver,
   Int,
   Mutation,
   Query,
   Resolver,
+  Root,
   UseMiddleware,
 } from "type-graphql";
 import { InputPost } from "./graphql.types";
@@ -13,8 +15,13 @@ import { MyContext } from "../types";
 import { isAuth } from "../middlewares/isAuth";
 import { getConnection } from "typeorm";
 
-@Resolver()
+@Resolver(Post)
 export class PostResolver {
+  @FieldResolver(() => String)
+  textSnippet(@Root() root: Post) {
+    return root.text.slice(0, 50);
+  }
+
   // find all posts
   @UseMiddleware(isAuth)
   @Query(() => [Post])
@@ -26,17 +33,20 @@ export class PostResolver {
     const realNumber = Math.min(50, limit);
     const qb = getConnection()
       .getRepository(Post)
-      .createQueryBuilder("p")
-      .orderBy('"createdAt"', "DESC")
+      .createQueryBuilder('p')
+      .where(`p."creatorId" = ${req.session.userId}`)
+      .orderBy('p."createdAt"', "DESC")
       .take(realNumber);
 
     if (cursor) {
-      qb.where('"createdAt" < :cursor', {
+      qb.where('p."createdAt" > :cursor', {
         cursor: new Date(parseInt(cursor)),
-        id: req.session.userId,
       });
     }
-    return qb.getMany();
+    console.log('cursor: ', cursor);
+    const posts = await qb.getMany();
+    console.log('posts: ', posts)
+    return posts;
   }
 
   // create a post based on the session-userId
