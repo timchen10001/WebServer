@@ -43,9 +43,7 @@ export class PostResolver {
         cursor: new Date(parseInt(cursor)),
       });
     }
-    console.log('cursor: ', cursor);
     const posts = await qb.getMany();
-    console.log('posts: ', posts)
     return posts;
   }
 
