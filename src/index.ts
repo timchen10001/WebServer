@@ -21,8 +21,8 @@ const main = async () => {
     ...keys.db,
     logging: true,
     synchronize: true,
+    migrations: [path.join(__dirname, './migrations/*')],
     entities: [Post, User],
-    migrations: [path.join(__dirname, './migrations/*')]
   });
   await con.runMigrations();
 
