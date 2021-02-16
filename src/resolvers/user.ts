@@ -1,5 +1,5 @@
 import argon2 from "argon2";
-import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, FieldResolver, Mutation, Query, Resolver, Root } from "type-graphql";
 
 import { MyContext } from "../types";
 import {
@@ -19,8 +19,18 @@ import { v4 as uuidv4 } from "uuid";
 import { FORGET_PASSWORD_PREFIX } from "../constants";
 import { sendEmail } from "../utils/sendEmail";
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+  @FieldResolver(() => String)
+  email(@Root() user: User, @Ctx() { req }: MyContext) {
+    // 檢查請求者是否是信箱持有者 
+    if (req.session.userId === user.id) {
+      return user.email
+    }
+    // 不顯示非本人的信箱
+    return "";
+  }
+
   // ME QUERY 保持會員狀態
   @Query(() => User, { nullable: true })
   async me(@Ctx() { req }: MyContext) {

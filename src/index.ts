@@ -15,6 +15,7 @@ import { UserResolver } from "./resolvers/user";
 import { PostResolver } from "./resolvers/post";
 import { __prod__ } from "./constants";
 import path from "path";
+import { Updoot } from "./entities/Updoot";
 
 const main = async () => {
   const con = await createConnection({
@@ -22,7 +23,7 @@ const main = async () => {
     logging: true,
     synchronize: true,
     migrations: [path.join(__dirname, './migrations/*')],
-    entities: [Post, User],
+    entities: [Post, User, Updoot],
   });
   await con.runMigrations();
 
@@ -67,10 +68,15 @@ const main = async () => {
 
   apolloServer.applyMiddleware({ app, cors: false });
 
-  app.get("/", async (_, res) => {
+  app.get("/all_users", async (_, res) => {
     const user = await User.find();
     res.send(user);
   });
+
+  app.get('/all_posts', async(_, res) => {
+    const posts = await Post.find({});
+    res.send(posts);
+  })
 
   app.listen(4000, () => {
     console.log("🌈 server started on localhost:4000 🌈");
