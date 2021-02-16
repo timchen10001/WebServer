@@ -1,5 +1,6 @@
 import { User } from "../entities/User";
 import { Field, InputType, ObjectType } from "type-graphql";
+import { Post } from "../entities/Post";
 
 // error
 @ObjectType()
@@ -20,6 +21,17 @@ export class InputPost {
     @Field()
     text!: string;
 }
+
+@ObjectType()
+export class PaginatedPosts {
+    @Field(() => [Post])
+    posts: Post[];
+
+    @Field()
+    hasMore: boolean;
+}
+
+
 
 // User
 @InputType()
