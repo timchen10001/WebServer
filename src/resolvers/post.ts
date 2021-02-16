@@ -30,21 +30,23 @@ export class PostResolver {
     @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
     @Ctx() { req }: MyContext
   ): Promise<Post[]> {
-    const realNumber = Math.min(50, limit);
+    const realNumber = Math.min(200, limit);
+
     const qb = getConnection()
       .getRepository(Post)
-      .createQueryBuilder('p')
-      .where(`p."creatorId" = ${req.session.userId}`)
+      .createQueryBuilder("p")
+      .where('p."creatorId" = :creatorId', {
+        creatorId: req.session.userId,
+      })
       .orderBy('p."createdAt"', "DESC")
       .take(realNumber);
 
     if (cursor) {
-      qb.where('p."createdAt" > :cursor', {
+      qb.andWhere('p."createdAt" < :cursor', {
         cursor: new Date(parseInt(cursor)),
       });
     }
-    const posts = await qb.getMany();
-    return posts;
+    return await qb.getMany();
   }
 
   // create a post based on the session-userId
