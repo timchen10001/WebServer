@@ -69,7 +69,7 @@ const main = async () => {
   apolloServer.applyMiddleware({ app, cors: false });
 
   app.get("/all_users", async (_, res) => {
-    const user = await User.find();
+    const user = await User.find({});
     res.send(user);
   });
 

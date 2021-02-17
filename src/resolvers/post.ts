@@ -22,15 +22,23 @@ import { User } from "../entities/User";
 export class PostResolver {
   @FieldResolver(() => String)
   textSnippet(@Root() post: Post) {
-  return post.text.slice(0, 50);
+    return post.text.slice(0, 50);
   }
 
   // @FieldResolver(() => User)
   // creator(
   //   @Root() post: Post,
   //   @Ctx() { req }: MyContext
+  // ) {
+    
+  // }
+
+  // @FieldResolver(() => User)
+  // creator(
+  //   @Root() post: Post,
+  //   @Ctx() { req }: MyContext
   // ): User {
-  //   return 
+  //   return
   // }
 
   @Mutation(() => Boolean)
@@ -43,36 +51,67 @@ export class PostResolver {
     // 確認 value 是否非 -1 即可，不需使用實際 value
     const isUpdoot = value !== -1;
     const realValue = isUpdoot ? 1 : -1;
-
-    // 在 Updoot 實體中插入資料
     const { userId } = req.session;
-    // await Updoot.insert({
-    //   userId,
-    //   postId,
-    //   value: realValue,
-    // });
 
-    // 使用 SQL 更新對應的 Post 實例之特性 points
+    const updoot = await Updoot.findOne({ where: { postId, userId } });
     let result: boolean = true;
-    await getConnection()
-      .query(
-        `
-        START TRANSACTION;
-
-        insert into updoot ("userId", "postId", value) 
-        values (${userId},${postId},${realValue});
-
-        update post
-        set points = points + ${realValue}
-        where id = ${postId};
-        
-        COMMIT;
-      `
-      )
-      .catch((err) => {
-        console.log(err);
-        result = false;
-      });
+    try {
+      if (!updoot) {
+        // 對該 Po文 沒投票過的 user
+        // 1. 新增對應 Updoot 實例
+        // 2. 更新 post.points
+        await getConnection().transaction(async (tm) => {
+          // 1.
+          await tm.query(
+            `
+            insert into updoot ("userId", "postId", value)
+            values ($1, $2, $3)
+          `,
+            [userId, postId, realValue]
+          );
+          // 2.
+          await getConnection().transaction(async (tm) => {
+            await tm.query(
+              `
+            update post
+            set points = points + $1
+            where id = $2
+            `,
+              [realValue, postId]
+            );
+          });
+        });
+      } else if (updoot && updoot.value !== realValue) {
+        // 投過票了，但想更新結果
+        // 1. 更新 updoot.value
+        // 2. 更新 post.points
+        await getConnection().transaction(async (tm) => {
+          // 1.
+          await tm.query(
+            `
+          update updoot
+          set value = $1
+          where "postId" = $2 and "userId" = $3
+          `,
+            [realValue, postId, userId]
+          );
+          // 2.
+          await getConnection().transaction(async (tm) => {
+            await tm.query(
+              `
+            update post
+            set points = points + $1
+            where id = $2
+            `,
+              [realValue, postId]
+            );
+          });
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      result = false;
+    }
 
     return result;
   }
@@ -147,7 +186,7 @@ export class PostResolver {
   ): Promise<Post> {
     return await Post.create({
       ...input,
-      creatorId: req.session.userId
+      creatorId: req.session.userId,
     }).save();
   }
 
@@ -175,8 +214,8 @@ export class PostResolver {
   }
 
   // delete a post
-  @UseMiddleware(isAuth)
   @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
   async deletePost(
     @Arg("id") id: number,
     @Ctx() { req }: MyContext
