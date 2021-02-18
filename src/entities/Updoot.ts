@@ -6,21 +6,20 @@ import { User } from "./User";
 // user <-> posts
 // user -> join table ( 以 Updoot 命名 ) <- posts
 
-// @ObjectType()
 @Entity()
 export class Updoot extends BaseEntity {
-    @Column({ type: "int" })
-    value: number;
+  @Column({ type: "int" })
+  value: number;
 
-    @PrimaryColumn()
-    userId: number;
+  @PrimaryColumn()
+  userId: number;
 
-    @ManyToOne(() => User, (user) => user.posts)
-    user: User;
-    
-    @PrimaryColumn()
-    postId: number;
+  @ManyToOne(() => User, (user) => user.posts)
+  user: User;
 
-    @ManyToOne(() => Post, (post) => post.updoots)
-    post: Post;
-};
+  @PrimaryColumn()
+  postId: number;
+
+  @ManyToOne(() => Post, (post) => post.updoots)
+  post: Post;
+}

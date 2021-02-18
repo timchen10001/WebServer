@@ -7,6 +7,7 @@ import session from "express-session";
 import Redis from "ioredis";
 import connectRedis from "connect-redis";
 import cors from "cors";
+import path from "path";
 
 import keys from "./configs/keys";
 import { Post } from "./entities/Post";
@@ -14,7 +15,6 @@ import { User } from "./entities/User";
 import { UserResolver } from "./resolvers/user";
 import { PostResolver } from "./resolvers/post";
 import { __prod__ } from "./constants";
-import path from "path";
 import { Updoot } from "./entities/Updoot";
 
 const main = async () => {
@@ -22,10 +22,25 @@ const main = async () => {
     ...keys.db,
     logging: true,
     synchronize: true,
-    migrations: [path.join(__dirname, './migrations/*')],
+    migrations: [path.join(__dirname, "./migrations/*")],
     entities: [Post, User, Updoot],
   });
   await con.runMigrations();
+
+  // // rebuilt vote system
+  // const posts = await Post.find();
+  // posts.forEach(async(p) => {
+  //   p.points = 0;
+  //   p.voteStatus = null;
+  //   await p.save();
+  // })
+  // const updoots = await Updoot.find();
+  // updoots.forEach(async(u) => {
+  //   u.value = 0;
+  //   await u.save();
+  // })
+  // await Updoot.delete({})
+  // return
 
   const app = express();
 
@@ -41,20 +56,20 @@ const main = async () => {
 
   app.use(
     session({
-      name: keys.cookie.name,
-      secret: keys.cookie.secret,
+      name: keys.session.name,
+      secret: keys.session.secret,
       store: new RedisStore({
         client: redis,
         disableTouch: true,
       }),
-      resave: false,
-      saveUninitialized: false,
       cookie: {
         maxAge: 10 * 365 * 24 * 60 * 60 * 1000,
         sameSite: "lax", // csrf
         httpOnly: true,
         secure: __prod__,
       },
+      resave: false,
+      saveUninitialized: false,
     })
   );
 
@@ -68,15 +83,17 @@ const main = async () => {
 
   apolloServer.applyMiddleware({ app, cors: false });
 
-  app.get("/all_users", async (_, res) => {
-    const user = await User.find({});
-    res.send(user);
-  });
+  if (!__prod__) {
+    app.get("/all_users", async (_, res) => {
+      const user = await User.find({});
+      res.send(user);
+    });
 
-  app.get('/all_posts', async(_, res) => {
-    const posts = await Post.find({});
-    res.send(posts);
-  })
+    app.get("/all_posts", async (_, res) => {
+      const posts = await Post.find({});
+      res.send(posts);
+    });
+  }
 
   app.listen(4000, () => {
     console.log("🌈 server started on localhost:4000 🌈");

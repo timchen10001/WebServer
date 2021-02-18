@@ -1,5 +1,14 @@
 import argon2 from "argon2";
-import { Arg, Ctx, FieldResolver, Mutation, Query, Resolver, Root } from "type-graphql";
+import {
+  Arg,
+  Ctx,
+  FieldResolver,
+  Mutation,
+  Query,
+  Resolver,
+  Root,
+} from "type-graphql";
+import { v4 as uuidv4 } from "uuid";
 
 import { MyContext } from "../types";
 import {
@@ -12,10 +21,9 @@ import {
   inValidUsernameEmailPassword,
   inValidEmail,
   inValidUsername,
-} from "../utils/Validators";
+} from "../utils/validators";
 import { sleep } from "../utils/sleep";
 import keys from "../configs/keys";
-import { v4 as uuidv4 } from "uuid";
 import { FORGET_PASSWORD_PREFIX } from "../constants";
 import { sendEmail } from "../utils/sendEmail";
 
@@ -23,9 +31,9 @@ import { sendEmail } from "../utils/sendEmail";
 export class UserResolver {
   @FieldResolver(() => String)
   email(@Root() user: User, @Ctx() { req }: MyContext) {
-    // 檢查請求者是否是信箱持有者 
+    // 檢查請求者是否是信箱持有者
     if (req.session.userId === user.id) {
-      return user.email
+      return user.email;
     }
     // 不顯示非本人的信箱
     return "";
@@ -91,7 +99,7 @@ export class UserResolver {
     // await user.save();
     await User.update({ id: userId }, { password: hashedPassword });
 
-    // 改變密碼後，自動登入(如果不想要自動登入，註解掉即可)
+    // 改變密碼後，自動登入(選擇性註解)
     req.session.userId = user.id;
 
     // 無效化憑證
@@ -154,7 +162,7 @@ export class UserResolver {
       // console.log(err);
 
       if (err.code === "23505") {
-        // user already exists
+        // 重複註冊
         if (err.detail.includes("username")) {
           return {
             errors: [
@@ -247,7 +255,7 @@ export class UserResolver {
 
     return new Promise((resolve) =>
       req.session.destroy((err) => {
-        res.clearCookie(keys.cookie.name);
+        res.clearCookie(keys.session.name || "");
         if (err) {
           console.log(err);
           resolve(false);
