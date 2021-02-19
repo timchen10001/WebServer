@@ -23,6 +23,12 @@ export class PostResolver {
     return post.text.slice(0, 50);
   }
 
+  @Query(() => Post, { nullable: true })
+  async post(@Arg("id", () => Int) id: number): Promise<Post | undefined> {
+    return await Post.findOne(id, { relations: ["creator"] });
+    // relations -> left join creator
+  }
+
   @Mutation(() => Boolean)
   @UseMiddleware(isAuth)
   async vote(
@@ -152,28 +158,6 @@ export class PostResolver {
       replacements
     );
 
-    // const qb = getConnection()
-    //   .getRepository(Post)
-    //   .createQueryBuilder("p")
-    //   .innerJoinAndSelect(
-    //     "p.creator", // post.creator
-    //     "u", // user
-    //     '"u.id" = p.creatorId' // user.id == creatorId
-    //   )
-    //   .orderBy('p."createdAt"', "DESC")
-    //   .take(realLimitPlusOne);
-
-    // qb.where('p."creatorId" = :creatorId', {
-    //   creatorId: req.session.userId,
-    // });
-
-    // if (cursor) {
-    //   qb.where('p."createdAt" < :cursor', {
-    //     cursor: new Date(parseInt(cursor)),
-    //   });
-    // }
-
-    // const posts = await qb.getMany();
     return {
       posts: posts.slice(0, realLimit),
       hasMore: posts.length > realLimit,
@@ -220,7 +204,7 @@ export class PostResolver {
   @Mutation(() => Boolean)
   @UseMiddleware(isAuth)
   async deletePost(
-    @Arg("id") id: number,
+    @Arg("id", () => Int) id: number,
     @Ctx() { req }: MyContext
   ): Promise<boolean> {
     const post = await Post.findOne({
@@ -229,6 +213,7 @@ export class PostResolver {
     if (!post) {
       return false;
     }
+    await Updoot.delete({ postId: id });
     await Post.delete(id);
     return true;
   }
