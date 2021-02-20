@@ -1,3 +1,4 @@
+import { sleep } from "../utils/sleep";
 import {
   Arg,
   Ctx,
@@ -126,7 +127,7 @@ export class PostResolver {
     @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
     @Ctx() { req }: MyContext
   ): Promise<PaginatedPosts> {
-    const realLimit = Math.min(200, limit);
+    const realLimit = Math.min(50, limit);
     const realLimitPlusOne = realLimit + 1;
     const { userId } = req.session;
 
@@ -181,7 +182,7 @@ export class PostResolver {
   @Mutation(() => Post, { nullable: true })
   @UseMiddleware(isAuth)
   async updatePost(
-    @Arg("id") id: number,
+    @Arg("id", () => Int) id: number,
     @Arg("input") input: InputPost,
     @Ctx() { req }: MyContext
   ): Promise<Post | null> {
@@ -193,9 +194,14 @@ export class PostResolver {
     }
 
     const { title, text } = input;
+    const isValidPost =
+      typeof title !== "undefined" && typeof text !== "undefined";
     // 更新貼文內容)
-    if (typeof title !== "undefined") {
-      await Post.update({ id }, { title, text });
+    if (isValidPost) {
+      post.title = title;
+      post.text = text;
+      post.updatedAt = new Date();
+      await post.save();
     }
     return post;
   }
@@ -213,6 +219,7 @@ export class PostResolver {
     if (!post) {
       return false;
     }
+    await sleep(4000);
     await Updoot.delete({ postId: id });
     await Post.delete(id);
     return true;
