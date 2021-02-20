@@ -17,6 +17,7 @@ import { PostResolver } from "./resolvers/post";
 import { __prod__ } from "./constants";
 import { Updoot } from "./entities/Updoot";
 
+
 const main = async () => {
   const con = await createConnection({
     ...keys.db,

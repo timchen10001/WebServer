@@ -127,6 +127,11 @@ export class PostResolver {
     @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
     @Ctx() { req }: MyContext
   ): Promise<PaginatedPosts> {
+    // 如果是分頁請求，放慢回應速度
+    if (cursor !== null) {
+      await sleep(1000);
+    }
+
     const realLimit = Math.min(50, limit);
     const realLimitPlusOne = realLimit + 1;
     const { userId } = req.session;
@@ -221,7 +226,7 @@ export class PostResolver {
     }
     await sleep(4000);
     await Updoot.delete({ postId: id });
-    await Post.delete(id);
+    await Post.delete({ id });
     return true;
   }
 }
