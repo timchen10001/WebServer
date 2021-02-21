@@ -21,6 +21,7 @@ import {
   inValidUsernameEmailPassword,
   inValidEmail,
   inValidUsername,
+  inValidPassword,
 } from "../utils/validators";
 import { sleep } from "../utils/sleep";
 import keys from "../configs/keys";
@@ -41,8 +42,8 @@ export class UserResolver {
 
   // ME QUERY 保持會員狀態
   @Query(() => User, { nullable: true })
-  async me(@Ctx() { req }: MyContext) {
-    return await User.findOne({ where: { id: req.session.userId } });
+  me(@Ctx() { req }: MyContext) {
+    return User.findOne({ where: { id: req.session.userId } });
   }
 
   @Mutation(() => UserResponse)
@@ -51,15 +52,9 @@ export class UserResolver {
     @Arg("newPassword") newPassword: string,
     @Ctx() { req, redis }: MyContext
   ): Promise<UserResponse> {
-    if (newPassword.length < 6) {
-      return {
-        errors: [
-          {
-            field: "newPassword",
-            message: "密碼長度不得低於 6 個字元",
-          },
-        ],
-      };
+    const errors = inValidPassword(newPassword, "newPassword");
+    if (errors) {
+      return { errors }
     }
 
     await sleep(2000);
@@ -102,7 +97,7 @@ export class UserResolver {
     // 改變密碼後，自動登入(選擇性註解)
     req.session.userId = user.id;
 
-    // 無效化憑證
+    // 無效化使用過的憑證
     await redis.del(key);
 
     return { user };
