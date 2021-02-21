@@ -16,12 +16,18 @@ import { Updoot } from "../entities/Updoot";
 import { isAuth } from "../middlewares/isAuth";
 import { MyContext } from "../types";
 import { InputPost, PaginatedPosts } from "./graphql.types";
+import { User } from "../entities/User";
 
 @Resolver(Post)
 export class PostResolver {
   @FieldResolver(() => String)
   textSnippet(@Root() post: Post) {
     return post.text.slice(0, 50);
+  }
+
+  @FieldResolver(() => User)
+  creator(@Root() post: Post, @Ctx() { userLoader }: MyContext) {
+    return userLoader.load(post.creatorId);
   }
 
   @Query(() => Post, { nullable: true })
@@ -145,18 +151,12 @@ export class PostResolver {
     const posts = await getConnection().query(
       `
       select p.*,
-      json_build_object(
-        'id', u.id,
-        'username', u.username,
-        'email', u.email
-      ) creator,
       ${
         userId
           ? '(select value from updoot where "userId" = $2 and "postId" = p.id) "voteStatus"'
           : '$2 as "voteStatus"'
       }
       from post p
-      inner join public.user u on u.id = p."creatorId"
       ${cursor ? `where p."createdAt" < $3` : ""}
       order by p."createdAt" DESC
       limit $1
