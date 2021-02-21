@@ -17,6 +17,7 @@ import { PostResolver } from "./resolvers/post";
 import { __prod__ } from "./constants";
 import { Updoot } from "./entities/Updoot";
 import { createUserLoader } from "./utils/createUserLoader";
+import { createUpdootLoader } from "./utils/createUpdootLoader";
 
 const main = async () => {
   const con = await createConnection({
@@ -84,6 +85,7 @@ const main = async () => {
       res,
       redis,
       userLoader: createUserLoader(),
+      updootLoader: createUpdootLoader()
     }),
   });
 

@@ -197,8 +197,8 @@ export class UserResolver {
 
     const field = { usernameOrEmail: "usernameOrEmail", password: "password" };
     const inputIsEmail = usernameOrEmail.includes("@");
+    
     let errors: FieldError[] | undefined;
-
     // 操作DB前，先確認數入資料是否符合規範
     if (inputIsEmail) {
       errors = inValidEmail(usernameOrEmail, field.usernameOrEmail);
@@ -238,7 +238,6 @@ export class UserResolver {
     }
 
     // 設定cookie
-
     req.session.userId = user.id;
 
     return { user };
