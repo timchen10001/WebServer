@@ -31,9 +31,113 @@ export class PostResolver {
   }
 
   @Query(() => Post, { nullable: true })
-  async post(@Arg("id", () => Int) id: number): Promise<Post | undefined> {
-    return await Post.findOne(id, { relations: ["creator"] });
-    // relations -> left join creator
+  post(@Arg("id", () => Int) id: number): Promise<Post | undefined> {
+    return Post.findOne(id);
+  }
+
+  // Query Posts (根據條件)
+  @Query(() => PaginatedPosts)
+  async posts(
+    @Arg("limit", () => Int) limit: number,
+    @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    @Ctx() { req }: MyContext
+  ): Promise<PaginatedPosts> {
+    // 如果是分頁請求，放慢回應速度
+    if (cursor !== null) {
+      await sleep(1000);
+    }
+
+    const realLimit = Math.min(50, limit);
+    const realLimitPlusOne = realLimit + 1;
+    const { userId } = req.session;
+
+    const replacements: any[] = [realLimitPlusOne, userId ? userId : null];
+
+    if (cursor) {
+      replacements.push(new Date(parseInt(cursor)));
+    }
+
+    // SQL 從資料庫中取出資料
+    const posts = await getConnection().query(
+      `
+      select p.*,
+      ${
+        userId
+          ? '(select value from updoot where "userId" = $2 and "postId" = p.id) "voteStatus"'
+          : '$2 as "voteStatus"'
+      }
+      from post p
+      ${cursor ? `where p."createdAt" < $3` : ""}
+      order by p."createdAt" DESC
+      limit $1
+    `,
+      replacements
+    );
+
+    return {
+      posts: posts.slice(0, realLimit),
+      hasMore: posts.length > realLimit,
+    };
+  }
+
+  // 新增貼文 (create post)
+  @Mutation(() => Post)
+  @UseMiddleware(isAuth)
+  createPost(
+    @Arg("input") input: InputPost,
+    @Ctx() { req }: MyContext
+  ): Promise<Post> {
+    return Post.create({
+      ...input,
+      creatorId: req.session.userId,
+    }).save();
+  }
+
+  // 更新貼文 (update post)
+  @Mutation(() => Post, { nullable: true })
+  @UseMiddleware(isAuth)
+  async updatePost(
+    @Arg("id", () => Int) id: number,
+    @Arg("input") input: InputPost,
+    @Ctx() { req }: MyContext
+  ): Promise<Post | null> {
+    const post = await Post.findOne({
+      where: { id, creatorId: req.session.userId },
+    });
+    if (!post) {
+      return null;
+    }
+
+    const { title, text } = input;
+    const isValidPost =
+      typeof title !== "undefined" && typeof text !== "undefined";
+    // 更新貼文內容)
+    if (isValidPost) {
+      post.title = title;
+      post.text = text;
+      post.updatedAt = new Date();
+      await post.save();
+    }
+    return post;
+  }
+
+  // 刪除貼文 (delete post)
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
+  async deletePost(
+    @Arg("id", () => Int) id: number,
+    @Ctx() { req }: MyContext
+  ): Promise<boolean> {
+    const post = await Post.findOne({
+      where: { id, creatorId: req.session.userId },
+    });
+    if (!post) {
+      return false;
+    }
+    await sleep(4000);
+    await Updoot.delete({ postId: id });
+    await Post.delete({ id });
+    return true;
   }
 
   @Mutation(() => Boolean)
@@ -48,6 +152,7 @@ export class PostResolver {
     const realValue = isUpdoot ? 1 : -1;
     const { userId } = req.session;
 
+    // 更新投票系統
     const updoot = await Updoot.findOne({ where: { postId, userId } });
     let result: boolean = true;
     try {
@@ -124,109 +229,5 @@ export class PostResolver {
       result = false;
     }
     return result;
-  }
-
-  // find all posts
-  @Query(() => PaginatedPosts)
-  async posts(
-    @Arg("limit", () => Int) limit: number,
-    @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
-    @Ctx() { req }: MyContext
-  ): Promise<PaginatedPosts> {
-    // 如果是分頁請求，放慢回應速度
-    if (cursor !== null) {
-      await sleep(1000);
-    }
-
-    const realLimit = Math.min(50, limit);
-    const realLimitPlusOne = realLimit + 1;
-    const { userId } = req.session;
-
-    const replacements: any[] = [realLimitPlusOne, userId ? userId : null];
-
-    if (cursor) {
-      replacements.push(new Date(parseInt(cursor)));
-    }
-
-    const posts = await getConnection().query(
-      `
-      select p.*,
-      ${
-        userId
-          ? '(select value from updoot where "userId" = $2 and "postId" = p.id) "voteStatus"'
-          : '$2 as "voteStatus"'
-      }
-      from post p
-      ${cursor ? `where p."createdAt" < $3` : ""}
-      order by p."createdAt" DESC
-      limit $1
-    `,
-      replacements
-    );
-
-    return {
-      posts: posts.slice(0, realLimit),
-      hasMore: posts.length > realLimit,
-    };
-  }
-
-  // create a post based on the session-userId
-  @Mutation(() => Post)
-  @UseMiddleware(isAuth)
-  async createPost(
-    @Arg("input") input: InputPost,
-    @Ctx() { req }: MyContext
-  ): Promise<Post> {
-    return await Post.create({
-      ...input,
-      creatorId: req.session.userId,
-    }).save();
-  }
-
-  // updata a post
-  @Mutation(() => Post, { nullable: true })
-  @UseMiddleware(isAuth)
-  async updatePost(
-    @Arg("id", () => Int) id: number,
-    @Arg("input") input: InputPost,
-    @Ctx() { req }: MyContext
-  ): Promise<Post | null> {
-    const post = await Post.findOne({
-      where: { id, creatorId: req.session.userId },
-    });
-    if (!post) {
-      return null;
-    }
-
-    const { title, text } = input;
-    const isValidPost =
-      typeof title !== "undefined" && typeof text !== "undefined";
-    // 更新貼文內容)
-    if (isValidPost) {
-      post.title = title;
-      post.text = text;
-      post.updatedAt = new Date();
-      await post.save();
-    }
-    return post;
-  }
-
-  // delete a post
-  @Mutation(() => Boolean)
-  @UseMiddleware(isAuth)
-  async deletePost(
-    @Arg("id", () => Int) id: number,
-    @Ctx() { req }: MyContext
-  ): Promise<boolean> {
-    const post = await Post.findOne({
-      where: { id, creatorId: req.session.userId },
-    });
-    if (!post) {
-      return false;
-    }
-    await sleep(4000);
-    await Updoot.delete({ postId: id });
-    await Post.delete({ id });
-    return true;
   }
 }
