@@ -1064,6 +1064,13 @@ dot-prop@^5.2.0:
   dependencies:
     is-obj "^2.0.0"
 
+dotenv-safe@^8.2.0:
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/dotenv-safe/-/dotenv-safe-8.2.0.tgz#8d548c7318a62c09a66c4dc8c31864cc007c78ba"
+  integrity sha512-uWwWWdUQkSs5a3mySDB22UtNwyEYi0JtEQu+vDzIqr9OjbDdC2Ip13PnSpi/fctqlYmzkxCeabiyCAOROuAIaA==
+  dependencies:
+    dotenv "^8.2.0"
+
 dotenv@^8.2.0:
   version "8.2.0"
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-8.2.0.tgz#97e619259ada750eea3e4ea3e26bceea5424b16a"
@@ -1311,6 +1318,13 @@ gauge@~2.7.3:
     string-width "^1.0.1"
     strip-ansi "^3.0.1"
     wide-align "^1.1.0"
+
+gen-env-types@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/gen-env-types/-/gen-env-types-1.0.5.tgz#620ff9fec10a4de9ffb6b6bd214a116069a5ce63"
+  integrity sha512-lntr8/DHuuCA83e8LT37kfGnAxydI/57ToyoBsGQfeGeSsZFt3OgNOxyRJf1Za7CUb5fQIBOwBS8bu3lBLL4AA==
+  dependencies:
+    chalk "^4.0.0"
 
 get-caller-file@^2.0.5:
   version "2.0.5"

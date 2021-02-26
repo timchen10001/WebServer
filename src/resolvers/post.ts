@@ -1,4 +1,3 @@
-import { sleep } from "../utils/sleep";
 import {
   Arg,
   Ctx,
@@ -13,10 +12,11 @@ import {
 import { getConnection } from "typeorm";
 import { Post } from "../entities/Post";
 import { Updoot } from "../entities/Updoot";
+import { User } from "../entities/User";
 import { isAuth } from "../middlewares/isAuth";
 import { MyContext } from "../types";
+import { sleep } from "../utils/sleep";
 import { InputPost, PaginatedPosts } from "./graphql.types";
-import { User } from "../entities/User";
 
 @Resolver(Post)
 export class PostResolver {
@@ -144,7 +144,9 @@ export class PostResolver {
     if (!post) {
       return false;
     }
-    await sleep(4000);
+    // 暫緩回應時間 １秒
+    await sleep(1000);
+
     await Updoot.delete({ postId: id });
     await Post.delete({ id });
     return true;

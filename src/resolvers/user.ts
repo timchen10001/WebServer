@@ -1,4 +1,5 @@
 import argon2 from "argon2";
+import { isLogin } from "../middlewares/isLogin";
 import {
   Arg,
   Ctx,
@@ -7,26 +8,25 @@ import {
   Query,
   Resolver,
   Root,
+  UseMiddleware,
 } from "type-graphql";
 import { v4 as uuidv4 } from "uuid";
-
+import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
+import { User } from "../entities/User";
 import { MyContext } from "../types";
+import { sendEmail } from "../utils/sendEmail";
+import { sleep } from "../utils/sleep";
+import {
+  inValidEmail,
+  inValidPassword,
+  inValidUsername,
+  inValidUsernameEmailPassword,
+} from "../utils/validators";
 import {
   FieldError,
   UsernameEmailPassword,
   UserResponse,
 } from "./graphql.types";
-import { User } from "../entities/User";
-import {
-  inValidUsernameEmailPassword,
-  inValidEmail,
-  inValidUsername,
-  inValidPassword,
-} from "../utils/validators";
-import { sleep } from "../utils/sleep";
-import keys from "../configs/keys";
-import { FORGET_PASSWORD_PREFIX } from "../constants";
-import { sendEmail } from "../utils/sendEmail";
 
 @Resolver(User)
 export class UserResolver {
@@ -46,6 +46,8 @@ export class UserResolver {
     return User.findOne({ where: { id: req.session.userId } });
   }
 
+
+  // UPDATE USER.PASSWORD 透過信箱重設密碼
   @Mutation(() => UserResponse)
   async changePassword(
     @Arg("token") token: string,
@@ -54,7 +56,7 @@ export class UserResolver {
   ): Promise<UserResponse> {
     const errors = inValidPassword(newPassword, "newPassword");
     if (errors) {
-      return { errors }
+      return { errors };
     }
 
     await sleep(2000);
@@ -128,13 +130,14 @@ export class UserResolver {
 
     await sendEmail(
       email,
-      `<a href="http://localhost:3000/change-password/${token}">重設密碼</a>`
+      `<a href="${process.env.CORS_ORIGIN}/change-password/${token}">重設密碼</a>`
     );
 
     return true;
   }
 
   // REGISTER 註冊
+  @UseMiddleware(isLogin)
   @Mutation(() => UserResponse)
   async register(
     @Arg("input") input: UsernameEmailPassword,
@@ -180,13 +183,14 @@ export class UserResolver {
       }
     }
 
-    // 設定cookie
+    // 設定cookie (如果要求客戶註冊完重新登入的話，選擇性註解)
     req.session.userId = user.id;
 
     return { user };
   }
 
   // LOGIN 登入
+  @UseMiddleware(isLogin)
   @Mutation(() => UserResponse)
   async login(
     @Arg("usernameOrEmail") usernameOrEmail: string,
@@ -197,7 +201,7 @@ export class UserResolver {
 
     const field = { usernameOrEmail: "usernameOrEmail", password: "password" };
     const inputIsEmail = usernameOrEmail.includes("@");
-    
+
     let errors: FieldError[] | undefined;
     // 操作DB前，先確認數入資料是否符合規範
     if (inputIsEmail) {
@@ -246,11 +250,11 @@ export class UserResolver {
   // LOGOUT 登出
   @Mutation(() => Boolean)
   async logout(@Ctx() { req, res }: MyContext): Promise<boolean> {
-    await sleep(2000);
+    await sleep(1000);
 
     return new Promise((resolve) =>
       req.session.destroy((err) => {
-        res.clearCookie(keys.session.name || "");
+        res.clearCookie(COOKIE_NAME || "");
         if (err) {
           console.log(err);
           resolve(false);

@@ -22,7 +22,7 @@ export function inValidEmail(
   email: string,
   field: string
 ): FieldError[] | undefined {
-  if (!email.includes("@")) {
+  if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) {
     return [
       {
         field,
