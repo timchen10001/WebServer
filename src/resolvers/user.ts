@@ -1,5 +1,4 @@
 import argon2 from "argon2";
-import { isLogin } from "../middlewares/isLogin";
 import {
   Arg,
   Ctx,
@@ -12,7 +11,9 @@ import {
 } from "type-graphql";
 import { v4 as uuidv4 } from "uuid";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
+import { Friend } from "../entities/Friend";
 import { User } from "../entities/User";
+import { isLogin } from "../middlewares/isLogin";
 import { MyContext } from "../types";
 import { sendEmail } from "../utils/sendEmail";
 import { sleep } from "../utils/sleep";
@@ -40,12 +41,22 @@ export class UserResolver {
     return "";
   }
 
+  @FieldResolver(() => [Friend], { nullable: true })
+  friends(@Root() user: User, @Ctx() { req }: MyContext) {
+    if (req.session.userId === user.id) {
+      return Friend.find({
+        value: 1,
+        receiverId: req.session.userId,
+      });
+    }
+    return null;
+  }
+
   // ME QUERY 保持會員狀態
   @Query(() => User, { nullable: true })
   me(@Ctx() { req }: MyContext) {
     return User.findOne({ where: { id: req.session.userId } });
   }
-
 
   // UPDATE USER.PASSWORD 透過信箱重設密碼
   @Mutation(() => UserResponse)

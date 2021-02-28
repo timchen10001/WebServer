@@ -10,11 +10,14 @@ import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
 import { COOKIE_NAME, __prod__ } from "./constants";
+import { Friend } from "./entities/Friend";
 import { Post } from "./entities/Post";
 import { Updoot } from "./entities/Updoot";
 import { User } from "./entities/User";
+import { FriendResolver } from "./resolvers/friend";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
+import { createFriendLoader } from "./utils/createFriendLoader";
 import { createUpdootLoader } from "./utils/createUpdootLoader";
 import { createUserLoader } from "./utils/createUserLoader";
 
@@ -25,10 +28,12 @@ const main = async () => {
     logging: true,
     synchronize: !__prod__,
     migrations: [path.join(__dirname, "./migrations/*")],
-    entities: [Post, User, Updoot],
+    entities: [Post, User, Updoot, Friend],
   });
+  // await Friend.delete({})
+  // return
 
-  await con.runMigrations();
+  // await con.runMigrations();
 
   const app = express();
 
@@ -66,7 +71,7 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [PostResolver, UserResolver],
+      resolvers: [PostResolver, UserResolver, FriendResolver],
       validate: false,
     }),
     context: ({ req, res }) => ({
@@ -75,6 +80,7 @@ const main = async () => {
       redis,
       userLoader: createUserLoader(),
       updootLoader: createUpdootLoader(),
+      friendLoader: createFriendLoader(),
     }),
   });
 
@@ -89,6 +95,11 @@ const main = async () => {
     app.get("/all_posts", async (_, res) => {
       const posts = await Post.find({});
       res.send(posts);
+    });
+
+    app.get("/", async (_, res) => {
+      const friends = await Friend.find({});
+      res.send(friends);
     });
   }
 
