@@ -1,6 +1,6 @@
-import { User } from "../entities/User";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { Post } from "../entities/Post";
+import { User } from "../entities/User";
 
 // error
 @ObjectType()
@@ -53,6 +53,7 @@ export class UserResponse {
   user?: User;
 }
 
+// Friend
 @ObjectType()
 export class InvitationResponse {
   @Field(() => [FieldError], { nullable: true })

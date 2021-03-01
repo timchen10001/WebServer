@@ -1,35 +1,31 @@
-import { Friend } from "../entities/Friend";
 import {
   Arg,
   Ctx,
-  FieldResolver,
   Int,
   Mutation,
   Query,
   Resolver,
-  Root,
   UseMiddleware,
 } from "type-graphql";
-import { User } from "../entities/User";
+import { getConnection } from "typeorm";
+import { Friend } from "../entities/Friend";
 import { isAuth } from "../middlewares/isAuth";
 import { MyContext } from "../types";
 import { InvitationResponse } from "./graphql.types";
-import { getConnection } from "typeorm";
 
 @Resolver(Friend)
 export class FriendResolver {
-  @FieldResolver(() => User)
-  user(@Root() friend: Friend, @Ctx() { req, userLoader }: MyContext) {
-    let id = 0;
-    switch (req.session.userId) {
-      case friend.userId:
-        id = friend.receiverId;
-        break;
-      case friend.receiverId:
-        id = friend.userId;
-        break;
-    }
-    return userLoader.load(id);
+
+  // 查看自己的好友邀請
+  @UseMiddleware(isAuth)
+  @Query(() => [Friend], { nullable: true })
+  receives(@Ctx() { req }: MyContext) {
+    return Friend.find({
+      where: {
+        value: 0,
+        receiverId: req.session.userId,
+      },
+    });
   }
 
   @UseMiddleware(isAuth)
@@ -37,12 +33,13 @@ export class FriendResolver {
   async respondToReceive(
     @Arg("inviterId", () => Int) inviterId: number,
     @Arg("value", () => Int) value: number,
-    @Ctx() { req }: MyContext
+    @Ctx() { req, userLoader }: MyContext
   ): Promise<boolean> {
     // 避免回應自己的邀請
     if (req.session.userId === inviterId) {
       return false;
     }
+    const me = await userLoader.load(req.session.userId);
 
     // 檢查是否為被邀請者
     const receive = await getConnection().query(
@@ -53,7 +50,7 @@ export class FriendResolver {
       [0, req.session.userId, inviterId]
     );
 
-    if (!receive) {
+    if (!receive || !me) {
       return false;
     }
 
@@ -67,14 +64,14 @@ export class FriendResolver {
                   set value = $1
                   where "receiverId" = $2 and "userId" = $3
               `,
-            [1, req.session.userId, inviterId]
+            [1, me.id, inviterId]
           );
           await tm.query(
             `
-                insert into friend ("userId", "receiverId", value)
-                values ($1, $2, $3)
+                insert into friend ("userId", "receiverId", "ID", "name", value)
+                values ($1, $2, $3, $4, $5)
             `,
-            [req.session.userId, inviterId, 1]
+            [me.id, inviterId, me.id, me.username, 1]
           );
         } else if (value === 0) {
           // deny
@@ -83,7 +80,7 @@ export class FriendResolver {
                   delete from friend
                   where "receiverId" = $1 and "userId" = $2
               `,
-            [req.session.userId, inviterId]
+            [me.id, inviterId]
           );
         }
       });
@@ -99,7 +96,7 @@ export class FriendResolver {
   @Mutation(() => InvitationResponse)
   async invite(
     @Arg("id", () => Int) id: number,
-    @Ctx() { req }: MyContext
+    @Ctx() { req, userLoader }: MyContext
   ): Promise<InvitationResponse> {
     if (req.session.userId === id) {
       return {
@@ -112,9 +109,10 @@ export class FriendResolver {
       };
     }
 
-    const targetAgent = await User.findOne(id);
+    const me = await userLoader.load(req.session.userId);
+    const targetAgent = await userLoader.load(id);
     // 目標使用者不存在
-    if (!targetAgent) {
+    if (!me || !targetAgent) {
       return {
         errors: [
           {
@@ -129,14 +127,14 @@ export class FriendResolver {
     if (
       (receiver = await Friend.findOne({
         where: {
-          userId: req.session.userId,
+          userId: me.id,
           receiverId: targetAgent.id,
         },
       })) ||
       (receiver = await Friend.findOne({
         where: {
           userId: targetAgent.id,
-          receiverId: req.session.userId,
+          receiverId: me.id,
         },
       }))
     ) {
@@ -148,10 +146,10 @@ export class FriendResolver {
       await getConnection().transaction(async (tm) => {
         await tm.query(
           `
-            insert into friend ("userId", "receiverId", value)
-            values ($1, $2, $3)
+            insert into friend ("userId", "receiverId", "ID", "name", value)
+            values ($1, $2, $3, $4, $5)
          `,
-          [req.session.userId, id, 0]
+          [me.id, id, me.id, me.username, 0]
         );
       });
     } else if (receiver?.value) {
@@ -190,17 +188,5 @@ export class FriendResolver {
       return false;
     }
     return true;
-  }
-
-  // 查看自己的好友邀請
-  @UseMiddleware(isAuth)
-  @Query(() => [Friend], { nullable: true })
-  receives(@Ctx() { req }: MyContext) {
-    return Friend.find({
-      where: {
-        value: 0,
-        receiverId: req.session.userId,
-      },
-    });
   }
 }

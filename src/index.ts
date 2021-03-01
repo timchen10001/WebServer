@@ -17,7 +17,6 @@ import { User } from "./entities/User";
 import { FriendResolver } from "./resolvers/friend";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
-import { createFriendLoader } from "./utils/createFriendLoader";
 import { createUpdootLoader } from "./utils/createUpdootLoader";
 import { createUserLoader } from "./utils/createUserLoader";
 
@@ -26,7 +25,7 @@ const main = async () => {
     type: "postgres",
     url: process.env.DATABASE_URL,
     logging: true,
-    synchronize: !__prod__,
+    synchronize: true,
     migrations: [path.join(__dirname, "./migrations/*")],
     entities: [Post, User, Updoot, Friend],
   });
@@ -80,7 +79,6 @@ const main = async () => {
       redis,
       userLoader: createUserLoader(),
       updootLoader: createUpdootLoader(),
-      friendLoader: createFriendLoader(),
     }),
   });
 

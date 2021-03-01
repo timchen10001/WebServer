@@ -7,13 +7,11 @@ import {
   Query,
   Resolver,
   Root,
-  UseMiddleware,
 } from "type-graphql";
 import { v4 as uuidv4 } from "uuid";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
 import { Friend } from "../entities/Friend";
 import { User } from "../entities/User";
-import { isLogin } from "../middlewares/isLogin";
 import { MyContext } from "../types";
 import { sendEmail } from "../utils/sendEmail";
 import { sleep } from "../utils/sleep";
@@ -148,7 +146,6 @@ export class UserResolver {
   }
 
   // REGISTER 註冊
-  @UseMiddleware(isLogin)
   @Mutation(() => UserResponse)
   async register(
     @Arg("input") input: UsernameEmailPassword,
@@ -201,7 +198,6 @@ export class UserResolver {
   }
 
   // LOGIN 登入
-  @UseMiddleware(isLogin)
   @Mutation(() => UserResponse)
   async login(
     @Arg("usernameOrEmail") usernameOrEmail: string,

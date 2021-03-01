@@ -22,7 +22,7 @@ import { InputPost, PaginatedPosts } from "./graphql.types";
 export class PostResolver {
   @FieldResolver(() => String)
   textSnippet(@Root() post: Post) {
-    return post.text.slice(0, 50);
+    return post.text.slice(0, 30);
   }
 
   @FieldResolver(() => User)

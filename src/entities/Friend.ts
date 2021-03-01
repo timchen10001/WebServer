@@ -3,10 +3,9 @@ import {
   BaseEntity,
   Column,
   Entity,
-  ManyToOne,
-  PrimaryGeneratedColumn,
+
+  PrimaryGeneratedColumn
 } from "typeorm";
-import { User } from "./User";
 
 // user <-> otheruser
 // user -> friend <- otheruser
@@ -24,11 +23,16 @@ export class Friend extends BaseEntity {
   // sender id
   @Column({ type: "int" })
   userId: number;
-
+  
   @Column({ type: "int" })
   receiverId: number;
 
-  @Field(() => User, { nullable: true })
-  @ManyToOne(() => User, (user) => user.friends)
-  user?: User;
+  @Field()
+  @Column({ nullable: true })
+  ID: number;
+
+  @Field()
+  @Column({ nullable: true })
+  name: string;
+
 }
