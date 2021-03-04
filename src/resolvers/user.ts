@@ -1,4 +1,5 @@
 import argon2 from "argon2";
+import { display } from "../utils/display";
 import {
   Arg,
   Ctx,
@@ -30,10 +31,15 @@ import {
 @Resolver(User)
 export class UserResolver {
   @FieldResolver(() => String)
+  username(@Root() user: User) {
+    return display(user.username);
+  }
+
+  @FieldResolver(() => String)
   email(@Root() user: User, @Ctx() { req }: MyContext) {
     // 檢查請求者是否是信箱持有者
     if (req.session.userId === user.id) {
-      return user.email;
+      return display(user.email);
     }
     // 不顯示非本人的信箱
     return "";
@@ -138,7 +144,7 @@ export class UserResolver {
     );
 
     await sendEmail(
-      email,
+      display(email),
       `<a href="${process.env.CORS_ORIGIN}/change-password/${token}">重設密碼</a>`
     );
 

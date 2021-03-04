@@ -36,7 +36,7 @@ export class FriendResolver {
     @Ctx() { req, userLoader }: MyContext
   ): Promise<boolean> {
     // 避免回應自己的邀請
-    if (req.session.userId === inviterId) {
+    if (!req.session.userId || req.session.userId === inviterId) {
       return false;
     }
     const me = await userLoader.load(req.session.userId);
@@ -98,7 +98,7 @@ export class FriendResolver {
     @Arg("id", () => Int) id: number,
     @Ctx() { req, userLoader }: MyContext
   ): Promise<InvitationResponse> {
-    if (req.session.userId === id) {
+    if (!req.session.userId || req.session.userId === id) {
       return {
         errors: [
           {

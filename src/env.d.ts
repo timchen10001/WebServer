@@ -8,5 +8,9 @@ declare namespace NodeJS {
     GMAIL_USER: string;
     GMAIL_PASS: string;
     DOMAIN: string;
+    CLOUDINARY_URL: string;
+    CLOUDINARY_FOLDER: string;
+    GOOGLE_OAUTH2_CLIENT_ID: string;
+    GOOGLE_OAUTH2_CLIENT_SECRET: string;
   }
 }

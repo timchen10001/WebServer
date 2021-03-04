@@ -16,7 +16,11 @@ import { User } from "../entities/User";
 import { isAuth } from "../middlewares/isAuth";
 import { MyContext } from "../types";
 import { sleep } from "../utils/sleep";
-import { InputPost, PaginatedPosts } from "./graphql.types";
+import {
+  CloudinaryImageInfo,
+  InputPost,
+  PaginatedPosts,
+} from "./graphql.types";
 
 @Resolver(Post)
 export class PostResolver {
@@ -59,7 +63,7 @@ export class PostResolver {
   ): Promise<PaginatedPosts> {
     // 如果是分頁請求，放慢回應速度
     if (cursor !== null) {
-      await sleep(1000);
+      await sleep(500);
     }
 
     const realLimit = Math.min(50, limit);

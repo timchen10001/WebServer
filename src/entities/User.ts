@@ -20,6 +20,13 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
+  @Column({ default: "" })
+  googleId: string;
+
+  @Field()
+  @Column({ default: "" })
+  avator: string;
+
   @Field()
   @Column({ unique: true })
   username!: string;

@@ -20,6 +20,9 @@ export class InputPost {
 
   @Field()
   text!: string;
+
+  @Field(() => String, { nullable: true })
+  images?: string;
 }
 
 @ObjectType()
@@ -29,6 +32,17 @@ export class PaginatedPosts {
 
   @Field()
   hasMore: boolean;
+}
+
+@InputType()
+export class CloudinaryImageInfo {
+  encoding: string;
+  fieldname: string;
+  filename: string;
+  mimetype: string;
+  originalname: string;
+  path: string;
+  size: number;
 }
 
 // User

@@ -5,6 +5,7 @@ import "dotenv-safe/config";
 import express from "express";
 import session from "express-session";
 import Redis from "ioredis";
+import passport from "passport";
 import path from "path";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
@@ -17,6 +18,8 @@ import { User } from "./entities/User";
 import { FriendResolver } from "./resolvers/friend";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
+import { authRoutes } from "./routes/authRoutes";
+import restfull from "./routes/restfull";
 import { createUpdootLoader } from "./utils/createUpdootLoader";
 import { createUserLoader } from "./utils/createUserLoader";
 
@@ -29,8 +32,6 @@ const main = async () => {
     migrations: [path.join(__dirname, "./migrations/*")],
     entities: [Post, User, Updoot, Friend],
   });
-  // await Friend.delete({})
-  // return
 
   // await con.runMigrations();
 
@@ -68,6 +69,11 @@ const main = async () => {
     })
   );
 
+  app.use(passport.initialize());
+
+  authRoutes(app);
+  restfull(app);
+
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
       resolvers: [PostResolver, UserResolver, FriendResolver],
@@ -83,23 +89,6 @@ const main = async () => {
   });
 
   apolloServer.applyMiddleware({ app, cors: false });
-
-  if (!__prod__) {
-    app.get("/all_users", async (_, res) => {
-      const user = await User.find({});
-      res.send(user);
-    });
-
-    app.get("/all_posts", async (_, res) => {
-      const posts = await Post.find({});
-      res.send(posts);
-    });
-
-    app.get("/", async (_, res) => {
-      const friends = await Friend.find({});
-      res.send(friends);
-    });
-  }
 
   const PORT = parseInt(process.env.PORT);
   app.listen(PORT, () => {
