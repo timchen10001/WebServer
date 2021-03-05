@@ -12,4 +12,4 @@ read REMOTE
 echo BRANCH NAME ?
 read BRANCH
 
-git add $FILE && git commit -m \"$COMMIT\" && git push $REMOTE $BRANCH
+git add $FILE && git commit -m \""$COMMIT"\" && git push $REMOTE $BRANCH
