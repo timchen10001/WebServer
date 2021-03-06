@@ -1,3 +1,1 @@
-export const display = (input: string) => {
-  return input.split(".oauth2")[0];
-};
+export const display = (input: string) => input.split(".oauth2")[0];

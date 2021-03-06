@@ -20,9 +20,14 @@ export default function restfull(app: Express) {
       }
     },
   });
-  app.post("/upload", upload.single("image"), async (req, res, next) => {
-    console.log("file: => ", req.file);
-    res.send(req.file);
+
+  app.post("/upload", upload.array("image"), async (req: any, res, next) => {
+    console.log("files: => ", req.files);
+    let pathStream = "";
+    for (let i = 0; i < req.files.length; i++) {
+      pathStream += req.files[i].path + "&";
+    }
+    res.send(pathStream);
   });
 
   if (!__prod__) {
@@ -36,7 +41,7 @@ export default function restfull(app: Express) {
       res.send(posts);
     });
 
-    app.get("/", async (_, res) => {
+    app.get("/all_friends", async (_, res) => {
       const friends = await Friend.find({});
       res.send(friends);
     });

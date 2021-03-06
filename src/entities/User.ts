@@ -23,6 +23,12 @@ export class User extends BaseEntity {
   @Column({ default: "" })
   googleId: string;
 
+  @Column({ default: "" })
+  facebookId: string;
+
+  @Column({ default: "" })
+  twitterId: string;
+
   @Field()
   @Column({ default: "" })
   avator: string;

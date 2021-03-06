@@ -21,7 +21,7 @@ export class InputPost {
   @Field()
   text!: string;
 
-  @Field(() => String, { nullable: true })
+  @Field()
   images?: string;
 }
 
@@ -33,6 +33,15 @@ export class PaginatedPosts {
   @Field()
   hasMore: boolean;
 }
+
+// @ObjectType()
+// export class ImagesOnPost {
+//   @Field(() => [String])
+//   images: String[];
+
+//   @Field()
+
+// }
 
 @InputType()
 export class CloudinaryImageInfo {

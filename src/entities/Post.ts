@@ -7,7 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
+  UpdateDateColumn
 } from "typeorm";
 import { Updoot } from "./Updoot";
 import { User } from "./User";
@@ -34,13 +34,9 @@ export class Post extends BaseEntity {
   @Field(() => Int, { nullable: true })
   voteStatus: number | null; // 1 || -1 || null
 
-  @Field(() => String, { nullable: true })
-  @Column()
-  images?: string;
-
-  // @Field(() => [String])
-  // @Column()
-  // reply: string[];
+  @Field()
+  @Column({ default: "" })
+  images: string;
 
   @Field()
   @Column()

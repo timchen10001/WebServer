@@ -6,7 +6,7 @@ import { createUpdootLoader } from "./utils/createUpdootLoader";
 import { createUserLoader } from "./utils/createUserLoader";
 
 export type req = Request & {
-  session?: session.Session & { userId?: number; };
+  session?: session.Session & { userId?: number };
 };
 
 export type MyContext = {

@@ -94,6 +94,20 @@ export class PostResolver {
     };
   }
 
+  // @Mutation(() => Boolean)
+  // @UseMiddleware(isAuth)
+  // async uploadImage(
+  //   @Root() post: Post,
+  //   @Arg('file') file: ArrayBuffer,
+  //   @Ctx() { req }: MyContext
+  // ) {
+  //   if (req.session.userId !== post.creatorId) {
+  //     return false;
+  //   }
+  //   console.log(file);
+  //   return true;
+  // }
+
   // 新增貼文 (create post)
   @Mutation(() => Post)
   @UseMiddleware(isAuth)
