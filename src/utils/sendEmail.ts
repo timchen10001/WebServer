@@ -1,4 +1,6 @@
 import nodemailer from "nodemailer";
+import keys from "../keys";
+import { __prod__ } from "../constants";
 
 // async..await is not allowed in global scope, must use a wrapper
 export async function sendEmail(to: string, html: string) {
@@ -7,14 +9,26 @@ export async function sendEmail(to: string, html: string) {
 
   // let testAccount = await nodemailer.createTestAccount();
   // console.log('testAccount', testAccount);
+  // return;
+  const options = __prod__
+    ? {
+        service: "Gmail",
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_PASS,
+        },
+      }
+    : {
+        host: "smtp.ethereal.email",
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: keys.ethereal.user,
+          pass: keys.ethereal.pass,
+        },
+      };
 
-  let transporter = nodemailer.createTransport({
-    service: "Gmail",
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_PASS,
-    },
-  });
+  let transporter = nodemailer.createTransport(options);
 
   // send mail with defined transport object
   let info = await transporter.sendMail({

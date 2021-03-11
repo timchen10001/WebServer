@@ -9,6 +9,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
+import { Friend } from "./Friend";
 import { Post } from "./Post";
 import { Updoot } from "./Updoot";
 
@@ -18,6 +19,19 @@ export class User extends BaseEntity {
   @Field()
   @PrimaryGeneratedColumn()
   id!: number;
+
+  @Column({ default: "" })
+  googleId: string;
+
+  @Column({ default: "" })
+  facebookId: string;
+
+  @Column({ default: "" })
+  twitterId: string;
+
+  @Field()
+  @Column({ default: "" })
+  avator: string;
 
   @Field()
   @Column({ unique: true })
@@ -35,6 +49,9 @@ export class User extends BaseEntity {
 
   @ManyToOne(() => Updoot, (updoot) => updoot.post)
   updoots: Updoot[];
+
+  @OneToMany(() => Friend, (friend) => friend.name)
+  friends: Friend[];
 
   @Field(() => String)
   @CreateDateColumn()

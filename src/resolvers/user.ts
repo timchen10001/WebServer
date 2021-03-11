@@ -1,5 +1,5 @@
 import argon2 from "argon2";
-import { isLogin } from "../middlewares/isLogin";
+import { display } from "../utils/display";
 import {
   Arg,
   Ctx,
@@ -8,10 +8,10 @@ import {
   Query,
   Resolver,
   Root,
-  UseMiddleware,
 } from "type-graphql";
 import { v4 as uuidv4 } from "uuid";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
+import { Friend } from "../entities/Friend";
 import { User } from "../entities/User";
 import { MyContext } from "../types";
 import { sendEmail } from "../utils/sendEmail";
@@ -31,13 +31,29 @@ import {
 @Resolver(User)
 export class UserResolver {
   @FieldResolver(() => String)
+  username(@Root() user: User) {
+    return display(user.username);
+  }
+
+  @FieldResolver(() => String)
   email(@Root() user: User, @Ctx() { req }: MyContext) {
     // 檢查請求者是否是信箱持有者
     if (req.session.userId === user.id) {
-      return user.email;
+      return display(user.email);
     }
     // 不顯示非本人的信箱
     return "";
+  }
+
+  @FieldResolver(() => [Friend])
+  friends(@Root() user: User, @Ctx() { req }: MyContext) {
+    if (req.session.userId === user.id) {
+      return Friend.find({
+        value: 1,
+        receiverId: req.session.userId,
+      });
+    }
+    return null;
   }
 
   // ME QUERY 保持會員狀態
@@ -45,7 +61,6 @@ export class UserResolver {
   me(@Ctx() { req }: MyContext) {
     return User.findOne({ where: { id: req.session.userId } });
   }
-
 
   // UPDATE USER.PASSWORD 透過信箱重設密碼
   @Mutation(() => UserResponse)
@@ -129,7 +144,7 @@ export class UserResolver {
     );
 
     await sendEmail(
-      email,
+      display(email),
       `<a href="${process.env.CORS_ORIGIN}/change-password/${token}">重設密碼</a>`
     );
 
@@ -137,7 +152,6 @@ export class UserResolver {
   }
 
   // REGISTER 註冊
-  @UseMiddleware(isLogin)
   @Mutation(() => UserResponse)
   async register(
     @Arg("input") input: UsernameEmailPassword,
@@ -190,7 +204,6 @@ export class UserResolver {
   }
 
   // LOGIN 登入
-  @UseMiddleware(isLogin)
   @Mutation(() => UserResponse)
   async login(
     @Arg("usernameOrEmail") usernameOrEmail: string,

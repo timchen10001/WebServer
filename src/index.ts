@@ -5,16 +5,21 @@ import "dotenv-safe/config";
 import express from "express";
 import session from "express-session";
 import Redis from "ioredis";
+import passport from "passport";
 import path from "path";
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
 import { COOKIE_NAME, __prod__ } from "./constants";
+import { Friend } from "./entities/Friend";
 import { Post } from "./entities/Post";
 import { Updoot } from "./entities/Updoot";
 import { User } from "./entities/User";
+import { FriendResolver } from "./resolvers/friend";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
+import { authRoutes } from "./routes/authRoutes";
+import restfull from "./routes/restfull";
 import { createUpdootLoader } from "./utils/createUpdootLoader";
 import { createUserLoader } from "./utils/createUserLoader";
 
@@ -23,12 +28,12 @@ const main = async () => {
     type: "postgres",
     url: process.env.DATABASE_URL,
     logging: true,
-    synchronize: !__prod__,
+    synchronize: true,
     migrations: [path.join(__dirname, "./migrations/*")],
-    entities: [Post, User, Updoot],
+    entities: [Post, User, Updoot, Friend],
   });
 
-  await con.runMigrations();
+  // await con.runMigrations();
 
   const app = express();
 
@@ -64,9 +69,14 @@ const main = async () => {
     })
   );
 
+  app.use(passport.initialize());
+
+  authRoutes(app);
+  restfull(app);
+
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [PostResolver, UserResolver],
+      resolvers: [PostResolver, UserResolver, FriendResolver],
       validate: false,
     }),
     context: ({ req, res }) => ({
@@ -79,18 +89,6 @@ const main = async () => {
   });
 
   apolloServer.applyMiddleware({ app, cors: false });
-
-  if (!__prod__) {
-    app.get("/all_users", async (_, res) => {
-      const user = await User.find({});
-      res.send(user);
-    });
-
-    app.get("/all_posts", async (_, res) => {
-      const posts = await Post.find({});
-      res.send(posts);
-    });
-  }
 
   const PORT = parseInt(process.env.PORT);
   app.listen(PORT, () => {
