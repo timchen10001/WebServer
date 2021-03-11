@@ -17,7 +17,6 @@ import { isAuth } from "../middlewares/isAuth";
 import { MyContext } from "../types";
 import { sleep } from "../utils/sleep";
 import {
-  CloudinaryImageInfo,
   InputPost,
   PaginatedPosts,
 } from "./graphql.types";
@@ -26,7 +25,7 @@ import {
 export class PostResolver {
   @FieldResolver(() => String)
   textSnippet(@Root() post: Post) {
-    return post.text.slice(0, 30);
+    return post.text.slice(0, 50);
   }
 
   @FieldResolver(() => User)
@@ -55,11 +54,33 @@ export class PostResolver {
     return Post.findOne(id);
   }
 
+  // @Query(() => PaginatedPosts)
+  // async privatePost(
+  //   @Root() post: Post,
+  //   @Ctx() { req }: MyContext
+  // ): Promise<PaginatedPosts> {
+  //   if (req.session.userId !== post.creatorId) {
+  //     return {
+  //       hasMore: false,
+  //       posts: [],
+  //     };
+  //   }
+  //   const posts = await getConnection().query(
+  //     `
+  //     select p.*
+  //     from post p
+  //     where 
+  //     `
+  //   );
+  // }
+
   // Query Posts (根據條件)
   @Query(() => PaginatedPosts)
   async posts(
+    @Arg("privateMode") privateMode: boolean,
     @Arg("limit", () => Int) limit: number,
-    @Arg("cursor", () => String, { nullable: true }) cursor: string | null
+    @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    @Ctx() { req }: MyContext
   ): Promise<PaginatedPosts> {
     // 如果是分頁請求，放慢回應速度
     if (cursor !== null) {
@@ -68,7 +89,6 @@ export class PostResolver {
 
     const realLimit = Math.min(50, limit);
     const realLimitPlusOne = realLimit + 1;
-    // const { userId } = req.session;
 
     const replacements: any[] = [realLimitPlusOne];
 
@@ -77,7 +97,7 @@ export class PostResolver {
     }
 
     // SQL 從資料庫中取出資料
-    const posts = await getConnection().query(
+    let posts = (await getConnection().query(
       `
       select p.*
       from post p
@@ -86,27 +106,22 @@ export class PostResolver {
       limit $1
     `,
       replacements
-    );
+    )) as Post[];
+
+    if (privateMode) {
+      posts = posts.filter(
+        (post) => post.creatorId === req.session.userId || post.isPublic
+      );
+    } else {
+      posts = posts.filter((post) => post.isPublic);
+    }
+    console.log(posts);
 
     return {
       posts: posts.slice(0, realLimit),
       hasMore: posts.length > realLimit,
     };
   }
-
-  // @Mutation(() => Boolean)
-  // @UseMiddleware(isAuth)
-  // async uploadImage(
-  //   @Root() post: Post,
-  //   @Arg('file') file: ArrayBuffer,
-  //   @Ctx() { req }: MyContext
-  // ) {
-  //   if (req.session.userId !== post.creatorId) {
-  //     return false;
-  //   }
-  //   console.log(file);
-  //   return true;
-  // }
 
   // 新增貼文 (create post)
   @Mutation(() => Post)

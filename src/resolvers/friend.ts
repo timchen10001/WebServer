@@ -1,20 +1,27 @@
 import {
   Arg,
   Ctx,
+  FieldResolver,
   Int,
   Mutation,
   Query,
   Resolver,
+  Root,
   UseMiddleware,
 } from "type-graphql";
 import { getConnection } from "typeorm";
 import { Friend } from "../entities/Friend";
 import { isAuth } from "../middlewares/isAuth";
 import { MyContext } from "../types";
+import { display } from "../utils/display";
 import { InvitationResponse } from "./graphql.types";
 
 @Resolver(Friend)
 export class FriendResolver {
+  @FieldResolver(() => String)
+  name(@Root() friend: Friend) {
+    return display(friend.name);
+  }
 
   // 查看自己的好友邀請
   @UseMiddleware(isAuth)

@@ -45,7 +45,7 @@ export class UserResolver {
     return "";
   }
 
-  @FieldResolver(() => [Friend], { nullable: true })
+  @FieldResolver(() => [Friend])
   friends(@Root() user: User, @Ctx() { req }: MyContext) {
     if (req.session.userId === user.id) {
       return Friend.find({

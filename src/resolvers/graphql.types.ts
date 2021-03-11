@@ -23,6 +23,9 @@ export class InputPost {
 
   @Field()
   images?: string;
+
+  @Field()
+  isPublic?: boolean;
 }
 
 @ObjectType()
@@ -33,15 +36,6 @@ export class PaginatedPosts {
   @Field()
   hasMore: boolean;
 }
-
-// @ObjectType()
-// export class ImagesOnPost {
-//   @Field(() => [String])
-//   images: String[];
-
-//   @Field()
-
-// }
 
 @InputType()
 export class CloudinaryImageInfo {

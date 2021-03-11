@@ -39,6 +39,10 @@ export class Post extends BaseEntity {
   images: string;
 
   @Field()
+  @Column({ default: true })
+  isPublic: boolean;
+
+  @Field()
   @Column()
   creatorId: number;
 

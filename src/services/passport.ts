@@ -32,8 +32,8 @@ passport.use(
       // });
 
       const googleId = profile.id;
-      const username = oauth2Mask(profile.displayName, "google");
-      const email = oauth2Mask(profile._json.email, "google");
+      const username = oauth2Mask(googleId, profile.displayName, "google");
+      const email = oauth2Mask(googleId, profile._json.email, "google");
       let user = await User.findOne({ where: { googleId } });
       if (user) {
         // 檢查使用者是否 已更改 Google 中的 姓名、信箱、頭像
@@ -96,8 +96,8 @@ passport.use(
       // console.log(avatorUploadResponse);
 
       const facebookId = profile.id;
-      const username = oauth2Mask(profile.displayName, "facebook");
-      const email = oauth2Mask(profile._json.email, "facebook");
+      const username = oauth2Mask(facebookId, profile.displayName, "facebook");
+      const email = oauth2Mask(facebookId, profile._json.email, "facebook");
       let user = await User.findOne({ where: { facebookId } });
       if (user) {
         const usernameHasChange = username !== user.username;
@@ -144,8 +144,8 @@ passport.use(
       // });
 
       const twitterId = profile.id;
-      const username = oauth2Mask(profile.displayName, "twitter");
-      const email = oauth2Mask(profile._json.email, "twitter");
+      const username = oauth2Mask(twitterId, profile.displayName, "twitter");
+      const email = oauth2Mask(twitterId, profile._json.email, "twitter");
       const avator = profile._json.profile_image_url_https;
 
       let user = await User.findOne({ where: { twitterId } });
