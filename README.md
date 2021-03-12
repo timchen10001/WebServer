@@ -21,7 +21,7 @@ Project Skills
 - Docker
 - SSH
 
-![Image](https://media.giphy.com/media/earBQbsIEGjiwMncz6/giphy.gif)
+![Image](https://res.cloudinary.com/dunc6xvuh/image/upload/v1615472882/material/giphy_4_-min_wzvkgd.gif)
 
 ![Image](https://upload.cc/i1/2021/03/10/woQyls.png)
 
