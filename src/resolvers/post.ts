@@ -16,10 +16,7 @@ import { User } from "../entities/User";
 import { isAuth } from "../middlewares/isAuth";
 import { MyContext } from "../types";
 import { sleep } from "../utils/sleep";
-import {
-  InputPost,
-  PaginatedPosts,
-} from "./graphql.types";
+import { InputPost, PaginatedPosts } from "./graphql.types";
 
 @Resolver(Post)
 export class PostResolver {
@@ -54,30 +51,9 @@ export class PostResolver {
     return Post.findOne(id);
   }
 
-  // @Query(() => PaginatedPosts)
-  // async privatePost(
-  //   @Root() post: Post,
-  //   @Ctx() { req }: MyContext
-  // ): Promise<PaginatedPosts> {
-  //   if (req.session.userId !== post.creatorId) {
-  //     return {
-  //       hasMore: false,
-  //       posts: [],
-  //     };
-  //   }
-  //   const posts = await getConnection().query(
-  //     `
-  //     select p.*
-  //     from post p
-  //     where 
-  //     `
-  //   );
-  // }
-
   // Query Posts (根據條件)
   @Query(() => PaginatedPosts)
   async posts(
-    @Arg("privateMode") privateMode: boolean,
     @Arg("limit", () => Int) limit: number,
     @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
     @Ctx() { req }: MyContext
@@ -107,15 +83,6 @@ export class PostResolver {
     `,
       replacements
     )) as Post[];
-
-    if (privateMode) {
-      posts = posts.filter(
-        (post) => post.creatorId === req.session.userId || post.isPublic
-      );
-    } else {
-      posts = posts.filter((post) => post.isPublic);
-    }
-    console.log(posts);
 
     return {
       posts: posts.slice(0, realLimit),

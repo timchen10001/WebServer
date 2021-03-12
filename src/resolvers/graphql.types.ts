@@ -24,8 +24,6 @@ export class InputPost {
   @Field()
   images?: string;
 
-  @Field()
-  isPublic?: boolean;
 }
 
 @ObjectType()
