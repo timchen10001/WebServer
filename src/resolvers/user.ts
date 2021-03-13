@@ -8,6 +8,7 @@ import {
   Query,
   Resolver,
   Root,
+  UseMiddleware,
 } from "type-graphql";
 import { v4 as uuidv4 } from "uuid";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
@@ -27,6 +28,7 @@ import {
   UsernameEmailPassword,
   UserResponse,
 } from "./graphql.types";
+import { isAuth } from "../middlewares/isAuth";
 
 @Resolver(User)
 export class UserResolver {
@@ -46,20 +48,30 @@ export class UserResolver {
   }
 
   @FieldResolver(() => [Friend])
-  friends(@Root() user: User, @Ctx() { req }: MyContext) {
-    if (req.session.userId === user.id) {
-      return Friend.find({
-        value: 1,
-        receiverId: req.session.userId,
-      });
-    }
-    return null;
+  friends(@Root() user: User, @Ctx() { req, friendLoader }: MyContext) {
+    return friendLoader.load({
+      value: 1,
+      receiverId: user.id,
+    });
   }
 
   // ME QUERY 保持會員狀態
   @Query(() => User, { nullable: true })
-  me(@Ctx() { req }: MyContext) {
-    return User.findOne({ where: { id: req.session.userId } });
+  me(@Ctx() { req, userLoader }: MyContext) {
+    if (req.session.userId) {
+      return userLoader.load(req.session.userId);
+    }
+    return null;
+  }
+
+  // 查看自己的好友邀請
+  @UseMiddleware(isAuth)
+  @Query(() => [Friend], { nullable: true })
+  receives(@Ctx() { req, friendLoader }: MyContext) {
+    return friendLoader.load({
+      value: 0,
+      receiverId: req.session.userId,
+    });
   }
 
   // UPDATE USER.PASSWORD 透過信箱重設密碼
@@ -67,7 +79,7 @@ export class UserResolver {
   async changePassword(
     @Arg("token") token: string,
     @Arg("newPassword") newPassword: string,
-    @Ctx() { req, redis }: MyContext
+    @Ctx() { req, redis, userLoader }: MyContext
   ): Promise<UserResponse> {
     const errors = inValidPassword(newPassword, "newPassword");
     if (errors) {
@@ -90,7 +102,7 @@ export class UserResolver {
       };
 
     const userId = parseInt(userIdStr);
-    const user = await User.findOne({ where: { id: userId } });
+    const user = await userLoader.load(userId);
 
     if (!user) {
       return {
@@ -106,9 +118,6 @@ export class UserResolver {
     // 改變密碼
     const hashedPassword = await argon2.hash(newPassword);
 
-    // user.password = hashedPassword;
-    // user.updatedAt = new Date();
-    // await user.save();
     await User.update({ id: userId }, { password: hashedPassword });
 
     // 改變密碼後，自動登入(選擇性註解)

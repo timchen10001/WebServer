@@ -23,18 +23,6 @@ export class FriendResolver {
     return display(friend.name);
   }
 
-  // 查看自己的好友邀請
-  @UseMiddleware(isAuth)
-  @Query(() => [Friend], { nullable: true })
-  receives(@Ctx() { req }: MyContext) {
-    return Friend.find({
-      where: {
-        value: 0,
-        receiverId: req.session.userId,
-      },
-    });
-  }
-
   @UseMiddleware(isAuth)
   @Mutation(() => Boolean)
   async respondToReceive(
@@ -103,7 +91,7 @@ export class FriendResolver {
   @Mutation(() => InvitationResponse)
   async invite(
     @Arg("id", () => Int) id: number,
-    @Ctx() { req, userLoader }: MyContext
+    @Ctx() { req, userLoader, friendLoader }: MyContext
   ): Promise<InvitationResponse> {
     if (!req.session.userId || req.session.userId === id) {
       return {

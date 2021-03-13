@@ -7,8 +7,9 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
 } from "typeorm";
+import { Reply } from "./Reply";
 import { Updoot } from "./Updoot";
 import { User } from "./User";
 
@@ -38,6 +39,10 @@ export class Post extends BaseEntity {
   @Column({ default: "" })
   images: string;
 
+  @Field(() => Int)
+  @Column({ default: 0 })
+  privateMode: number;
+
   @Field()
   @Column()
   creatorId: number;
@@ -48,6 +53,9 @@ export class Post extends BaseEntity {
 
   @OneToMany(() => Updoot, (updoot) => updoot.user)
   updoots: Updoot[];
+
+  @OneToMany(() => Reply, (reply) => reply.replierId)
+  replies: Reply[];
 
   @Field(() => String)
   @CreateDateColumn()

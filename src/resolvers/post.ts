@@ -11,12 +11,18 @@ import {
 } from "type-graphql";
 import { getConnection } from "typeorm";
 import { Post } from "../entities/Post";
+import { Reply } from "../entities/Reply";
 import { Updoot } from "../entities/Updoot";
 import { User } from "../entities/User";
 import { isAuth } from "../middlewares/isAuth";
 import { MyContext } from "../types";
 import { sleep } from "../utils/sleep";
-import { InputPost, PaginatedPosts } from "./graphql.types";
+import {
+  InputPost,
+  PaginatedPosts,
+  PostReplyInput,
+  ReplyResponse,
+} from "./graphql.types";
 
 @Resolver(Post)
 export class PostResolver {
@@ -28,6 +34,11 @@ export class PostResolver {
   @FieldResolver(() => User)
   creator(@Root() post: Post, @Ctx() { userLoader }: MyContext) {
     return userLoader.load(post.creatorId);
+  }
+
+  @FieldResolver(() => [Reply])
+  replies(@Root() post: Post, @Ctx() { replyLoader }: MyContext) {
+    return replyLoader.load({ postId: post.id });
   }
 
   @FieldResolver(() => Int, { nullable: true })

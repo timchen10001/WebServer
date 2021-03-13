@@ -1,5 +1,4 @@
 import { Express } from "express";
-import { send } from "process";
 import { User } from "../entities/User";
 import passport from "../services/passport";
 import { req } from "../types";
