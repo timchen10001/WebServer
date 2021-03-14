@@ -32,7 +32,7 @@ export class ReplyResolver {
       return {
         errors: [
           {
-            field: "replyInput",
+            field: "content",
             message: "回覆內容不可空白",
           },
         ],
@@ -44,7 +44,7 @@ export class ReplyResolver {
       return {
         errors: [
           {
-            field: "replyInput",
+            field: "content",
             message: "貼文不存在",
           },
         ],

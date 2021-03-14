@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import session from "express-session";
 import { Redis } from "ioredis";
-import { Multer } from "multer";
 import { createFriendLoader } from "./utils/createFriendLoader";
 import { createReplyLoader } from "./utils/createReplyLoader";
 import { createUpdootLoader } from "./utils/createUpdootLoader";

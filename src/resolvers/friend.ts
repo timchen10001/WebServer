@@ -4,7 +4,6 @@ import {
   FieldResolver,
   Int,
   Mutation,
-  Query,
   Resolver,
   Root,
   UseMiddleware,

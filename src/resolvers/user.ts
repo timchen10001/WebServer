@@ -170,9 +170,11 @@ export class UserResolver {
     const errors = inValidUsernameEmailPassword(input);
     if (errors) return { errors };
 
+    const seed = Math.floor(Math.random() * 5000);
     const hashedPassword = await argon2.hash(input.password);
     const user = User.create({
       username: input.username,
+      avator: `https://avatars.dicebear.com/api/male/${seed}.svg`,
       email: input.email,
       password: hashedPassword,
     });
