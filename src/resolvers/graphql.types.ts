@@ -1,5 +1,6 @@
-import { Field, InputType, ObjectType } from "type-graphql";
+import { Field, InputType, Int, ObjectType } from "type-graphql";
 import { Post } from "../entities/Post";
+import { Reply } from "../entities/Reply";
 import { User } from "../entities/User";
 
 // error
@@ -23,7 +24,6 @@ export class InputPost {
 
   @Field()
   images?: string;
-
 }
 
 @ObjectType()
@@ -35,15 +35,22 @@ export class PaginatedPosts {
   hasMore: boolean;
 }
 
+@ObjectType()
+export class ReplyResponse {
+  @Field(() => Reply, { nullable: true })
+  reply?: Reply;
+
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[];
+}
+
 @InputType()
-export class CloudinaryImageInfo {
-  encoding: string;
-  fieldname: string;
-  filename: string;
-  mimetype: string;
-  originalname: string;
-  path: string;
-  size: number;
+export class PostReplyInput {
+  @Field(() => Int)
+  postId!: number;
+
+  @Field()
+  content!: string;
 }
 
 // User

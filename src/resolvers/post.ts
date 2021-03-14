@@ -11,6 +11,7 @@ import {
 } from "type-graphql";
 import { getConnection } from "typeorm";
 import { Post } from "../entities/Post";
+import { Reply } from "../entities/Reply";
 import { Updoot } from "../entities/Updoot";
 import { User } from "../entities/User";
 import { isAuth } from "../middlewares/isAuth";
@@ -22,12 +23,17 @@ import { InputPost, PaginatedPosts } from "./graphql.types";
 export class PostResolver {
   @FieldResolver(() => String)
   textSnippet(@Root() post: Post) {
-    return post.text.slice(0, 50);
+    return post.text.slice(0, 70);
   }
 
   @FieldResolver(() => User)
   creator(@Root() post: Post, @Ctx() { userLoader }: MyContext) {
     return userLoader.load(post.creatorId);
+  }
+
+  @FieldResolver(() => [Reply])
+  replies(@Root() post: Post, @Ctx() { replyLoader }: MyContext) {
+    return replyLoader.load({ postId: post.id });
   }
 
   @FieldResolver(() => Int, { nullable: true })

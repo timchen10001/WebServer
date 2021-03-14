@@ -13,13 +13,17 @@ import { createConnection } from "typeorm";
 import { COOKIE_NAME, __prod__ } from "./constants";
 import { Friend } from "./entities/Friend";
 import { Post } from "./entities/Post";
+import { Reply } from "./entities/Reply";
 import { Updoot } from "./entities/Updoot";
 import { User } from "./entities/User";
 import { FriendResolver } from "./resolvers/friend";
 import { PostResolver } from "./resolvers/post";
+import { ReplyResolver } from "./resolvers/reply";
 import { UserResolver } from "./resolvers/user";
 import { authRoutes } from "./routes/authRoutes";
 import restfull from "./routes/restfull";
+import { createFriendLoader } from "./utils/createFriendLoader";
+import { createReplyLoader } from "./utils/createReplyLoader";
 import { createUpdootLoader } from "./utils/createUpdootLoader";
 import { createUserLoader } from "./utils/createUserLoader";
 
@@ -30,7 +34,7 @@ const main = async () => {
     logging: true,
     synchronize: true,
     migrations: [path.join(__dirname, "./migrations/*")],
-    entities: [Post, User, Updoot, Friend],
+    entities: [Post, User, Updoot, Friend, Reply],
   });
 
   // await con.runMigrations();
@@ -76,7 +80,7 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [PostResolver, UserResolver, FriendResolver],
+      resolvers: [PostResolver, ReplyResolver, UserResolver, FriendResolver],
       validate: false,
     }),
     context: ({ req, res }) => ({
@@ -85,6 +89,8 @@ const main = async () => {
       redis,
       userLoader: createUserLoader(),
       updootLoader: createUpdootLoader(),
+      replyLoader: createReplyLoader(),
+      friendLoader: createFriendLoader(),
     }),
   });
 
