@@ -21,6 +21,7 @@ export class Reply extends BaseEntity {
   @Field(() => User)
   replier: User;
 
+  @Field()
   @Column()
   postId: number;
 

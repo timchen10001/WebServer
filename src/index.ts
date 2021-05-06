@@ -100,6 +100,7 @@ const main = async () => {
   app.listen(PORT, () => {
     console.log(`🌈 server listen on port:${PORT} 🌈`);
   });
+
 };
 
 main().catch((e) => {
